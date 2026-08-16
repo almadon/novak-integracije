@@ -1,0 +1,50 @@
+# CI for Forgejo Actions. Builds and publishes each integration image.
+#
+# FIRST RUN WILL FAIL: `npm ci` needs a package-lock.json and memory-mcp has
+# never been installed. Run `npm install` there, commit the lockfile, then this
+# passes. `npm ci` is deliberate — CI should build exactly what was committed.
+
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  memory-mcp:
+    name: memory-mcp builds
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: memory-mcp
+      - run: npm run typecheck
+        working-directory: memory-mcp
+      - run: npm run build
+        working-directory: memory-mcp
+
+  image:
+    name: Publish memory-mcp image
+    needs: memory-mcp
+    if: github.event_name == 'push'
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to the container registry
+        # VERIFY THE HOST. Git remotes use nex.a64.one; the Caddy config routes
+        # git.a64.one to Forgejo. Container registries speak HTTP, so
+        # git.a64.one is the likelier one — but this was never confirmed.
+        run: |
+          echo "${{ secrets.FORGEJO_TOKEN }}" | \
+            docker login git.a64.one -u "${{ github.actor }}" --password-stdin
+      - name: Build and push
+        run: |
+          IMAGE=git.a64.one/${{ github.repository_owner }}/novak-memory-mcp
+          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" memory-mcp
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
