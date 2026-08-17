@@ -1,11 +1,9 @@
-# novak-integracje
+# novak-integracije
 
 Integrations for [Novak](https://github.com/almadon/novak) — the MCP servers and adapters that
 give the assistant its capabilities.
 
-> **Naming:** the repo is `novak-integracje`, following the `srz` / `konzol`
-> pattern. The local working directory may be spelled `integracije` — the
-> directory name is arbitrary and nothing depends on it.
+The default extension catalog for Novak.
 
 ## What belongs here
 
@@ -63,11 +61,24 @@ that identity closed over, so the tools have no way to refer to anyone else.
 |---|---|---|
 | [`memory-mcp/`](memory-mcp/README.md) | MCP front end for Mem0, with per-user scoping | **never run** |
 
-## Wanted
+## Tududi: a worked example of "prefer no code"
 
-- **Tududi** — replacing Vikunja for tasks. Needs either a native MCP endpoint
-  (check first) or an adapter here. Vikunja stays until this lands; this is an
-  addition, not a swap-and-delete.
+Tududi was added for tasks, and needed **nothing in this repo**. It ships its
+own MCP server at `/api/mcp` (streamable HTTP, bearer token), so it is
+catalogued as an external entry in the core registry and clients point straight
+at it. No adapter, no wrapper container, no code to maintain.
+
+That is the outcome to aim for. Check for a native endpoint before writing
+anything.
+
+Vikunja stays. Tududi is an addition, not a replacement — other people use this
+too, and removing a working integration because it is not the one you happen to
+prefer is not an upgrade.
+
+**Worth knowing:** Tududi also has its own optional AI assistant, separate from
+its MCP server. It is off by default and its `LLM_BASE_URL` can point at oMLX,
+so it can use Novak's own model rather than a cloud provider. Using MCP does
+not require enabling it.
 
 ## Status
 
