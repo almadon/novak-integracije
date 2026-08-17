@@ -1,26 +1,40 @@
-# CI for Forgejo Actions. Builds and publishes each integration image.
+# Builds each integration and publishes its image to ghcr.io, which is what
+# the novak stack's registry/mcp-servers.yaml pulls.
 #
 # FIRST RUN WILL FAIL: `npm ci` needs a package-lock.json and memory-mcp has
 # never been installed. Run `npm install` there, commit the lockfile, then this
 # passes. `npm ci` is deliberate — CI should build exactly what was committed.
+#
+# Publishing uses the built-in GITHUB_TOKEN, so there is no secret to manage.
+# Packages are created private on first publish; make them public once
+# (Package settings → Change visibility) or the Mac will need credentials.
+#
+# Images are named ghcr.io/<owner>/<repo>/<integration> so each one associates
+# with this repository automatically, and so adding a second integration is
+# just another job rather than a naming decision.
 
 name: ci
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
     tags: ["v*"]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   memory-mcp:
     name: memory-mcp builds
-    runs-on: docker
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: memory-mcp/package-lock.json
       - run: npm ci
         working-directory: memory-mcp
       - run: npm run typecheck
@@ -32,19 +46,21 @@ jobs:
     name: Publish memory-mcp image
     needs: memory-mcp
     if: github.event_name == 'push'
-    runs-on: docker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Log in to the container registry
-        # VERIFY THE HOST. Git remotes use nex.a64.one; the Caddy config routes
-        # git.a64.one to Forgejo. Container registries speak HTTP, so
-        # git.a64.one is the likelier one — but this was never confirmed.
+
+      - name: Log in to ghcr.io
         run: |
-          echo "${{ secrets.FORGEJO_TOKEN }}" | \
-            docker login git.a64.one -u "${{ github.actor }}" --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
       - name: Build and push
         run: |
-          IMAGE=git.a64.one/${{ github.repository_owner }}/novak-memory-mcp
+          IMAGE=ghcr.io/${{ github.repository }}/memory-mcp
           docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" memory-mcp
           docker push "$IMAGE:latest"
           docker push "$IMAGE:${{ github.sha }}"
