@@ -1,11 +1,11 @@
-# novak-integracije
+# novak-integracje
 
-Integrations for [Novak](../srz/README.md) — the MCP servers and adapters that
+Integrations for [Novak](https://github.com/almadon/novak) — the MCP servers and adapters that
 give the assistant its capabilities.
 
-> **Naming:** this follows the `srz` / `konzol` pattern (Serbian, matching the
-> project name). Rename the directory and repo freely if you'd rather it were
-> `novak-integrations` — nothing depends on the name.
+> **Naming:** the repo is `novak-integracje`, following the `srz` / `konzol`
+> pattern. The local working directory may be spelled `integracije` — the
+> directory name is arbitrary and nothing depends on it.
 
 ## What belongs here
 
@@ -32,7 +32,7 @@ An integration is a dependency your assistant will trust with data. Before
 adding one:
 
 1. **Prefer no code.** Native MCP endpoint? Use it directly.
-2. **Record it** in [`srz/docs/credits.md`](../srz/docs/credits.md) with a link
+2. **Record it** in [`novak/docs/credits.md`](https://github.com/almadon/novak/blob/HEAD/docs/credits.md) with a link
    and licence.
 3. **Set a risk level** in the registry. `standard` reads or writes one service
    you already run; `elevated` can act outward irreversibly; `dangerous` can

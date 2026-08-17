@@ -21,7 +21,7 @@ this is first-party and deliberately small.
 shim maps that token to a `user_id` and injects it into every Mem0 call. There
 is no tool parameter, header, or URL path that lets a caller name a different
 user. This matters because the LAN includes untrusted devices (see
-[srz/docs/security.md](../../srz/docs/security.md), Rule 4) and because a model can be
+[novak/docs/security.md](https://github.com/almadon/novak/blob/HEAD/docs/security.md), Rule 4) and because a model can be
 talked into passing whatever a prompt-injected document tells it to
 (Rule 3) — if `user_id` were a tool argument, injected text could read another
 person's memories.
@@ -115,7 +115,7 @@ and HA connects unauthenticated. So the two modes coexist:
 anything that can reach this port reads and writes household memory without
 authenticating. That is tolerable only because household memory is shared by
 definition, and only on a Tailscale-only path — do not publish this port to a
-flat LAN carrying IoT devices (see [srz/docs/security.md](../../srz/docs/security.md),
+flat LAN carrying IoT devices (see [novak/docs/security.md](https://github.com/almadon/novak/blob/HEAD/docs/security.md),
 Rule 4). Per-user memories stay protected: they require a token, and no
 unauthenticated caller can reach them.
 
