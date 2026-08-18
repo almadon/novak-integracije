@@ -14,6 +14,12 @@ export interface Memory {
   memory?: string;
   text?: string;
   created_at?: string;
+  /**
+   * Declared because deleteOwned depends on it to check ownership. Optional
+   * because it is not guaranteed to come back on every endpoint — ownerOf
+   * treats a missing value as "cannot prove ownership" and fails closed.
+   */
+  user_id?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -108,8 +114,7 @@ function normalizeList(body: { results?: Memory[] } | Memory[]): Memory[] {
 }
 
 function ownerOf(m: Memory): string | undefined {
-  const direct = (m as Record<string, unknown>).user_id;
-  if (typeof direct === "string") return direct;
+  if (typeof m.user_id === "string") return m.user_id;
   const nested = m.metadata?.user_id;
   return typeof nested === "string" ? nested : undefined;
 }
