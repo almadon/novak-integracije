@@ -45,21 +45,32 @@ adding one:
 
 ## The identity rule
 
-If an integration is multi-user, the caller must not be able to name the user.
+If an integration is multi-user, **the caller must not be able to name the
+user.**
 
 This isn't a style preference. A model chooses tool arguments based on text it
-has read, including documents and email it didn't write. If `user_id` were a
-parameter, a note saying *"look up user alice"* would be a working attack.
+has read, including documents and email it didn't write. If a user or namespace
+were a parameter, a note saying *"look up user alice"* would be a working
+attack.
 
-`memory-mcp/` is the reference implementation: identity comes from a token
-bound to the connection, and the MCP server object is rebuilt per request with
-that identity closed over, so the tools have no way to refer to anyone else.
+Hindsight is the worked example of doing it right: the memory bank is part of
+the MCP URL, each connection is scoped to one, and no tool takes a bank
+argument. There is nothing to poison.
 
-## Contents
+An integration that fails this test needs a wrapper here that enforces it — or,
+better, a different upstream. `memory-mcp` used to live in this repo doing
+exactly that for a backend that lacked it. It was deleted when the backend
+changed, which is the outcome to want: the shim was never the goal.
+
+## Contents## Contents
 
 | Integration | What it does | Status |
 |---|---|---|
-| [`memory-mcp/`](memory-mcp/README.md) | MCP front end for Mem0, with per-user scoping | **never run** |
+| _(none)_ | Everything currently used speaks MCP natively | — |
+
+That table being empty is the healthy state, not a gap. Outline, Tududi and
+Hindsight all serve MCP themselves and are catalogued in the core registry as
+external entries. Code belongs here only when an upstream leaves no choice.
 
 ## Tududi: a worked example of "prefer no code"
 
@@ -82,6 +93,5 @@ not require enabling it.
 
 ## Status
 
-Nothing here has been built or run. `memory-mcp` has no lockfile yet, so its
-Docker build and CI both fail until `npm install` is run and the result
-committed.
+No integrations currently need code. If one does, it gets its own directory, a
+job in `.github/workflows/ci.yml`, and an image published to ghcr.

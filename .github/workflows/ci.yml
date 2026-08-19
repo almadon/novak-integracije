@@ -1,66 +1,22 @@
-# Builds each integration and publishes its image to ghcr.io, which is what
-# the novak stack's registry/mcp-servers.yaml pulls.
+# No integrations currently need building — everything in use speaks MCP
+# natively and is catalogued in the core repo's registry as an external entry.
 #
-# FIRST RUN WILL FAIL: `npm ci` needs a package-lock.json and memory-mcp has
-# never been installed. Run `npm install` there, commit the lockfile, then this
-# passes. `npm ci` is deliberate — CI should build exactly what was committed.
-#
-# Publishing uses the built-in GITHUB_TOKEN, so there is no secret to manage.
-# Packages are created private on first publish; make them public once
-# (Package settings → Change visibility) or the Mac will need credentials.
-#
-# Images are named ghcr.io/<owner>/<repo>/<integration> so each one associates
-# with this repository automatically, and so adding a second integration is
-# just another job rather than a naming decision.
+# When one does need code, add a build job here plus an image publish to ghcr,
+# following the pattern in novak-konzol.
 
 name: ci
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  memory-mcp:
-    name: memory-mcp builds
+  noop:
+    name: nothing to build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: memory-mcp/package-lock.json
-      - run: npm ci
-        working-directory: memory-mcp
-      - run: npm run typecheck
-        working-directory: memory-mcp
-      - run: npm run build
-        working-directory: memory-mcp
-
-  image:
-    name: Publish memory-mcp image
-    needs: memory-mcp
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Log in to ghcr.io
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" \
-            | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-      - name: Build and push
-        run: |
-          IMAGE=ghcr.io/${{ github.repository }}/memory-mcp
-          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" memory-mcp
-          docker push "$IMAGE:latest"
-          docker push "$IMAGE:${{ github.sha }}"
+      - run: echo "No integrations require a build. See README.md."
