@@ -62,7 +62,7 @@ better, a different upstream. `memory-mcp` used to live in this repo doing
 exactly that for a backend that lacked it. It was deleted when the backend
 changed, which is the outcome to want: the shim was never the goal.
 
-## Contents## Contents
+## Contents
 
 | Integration | What it does | Status |
 |---|---|---|
