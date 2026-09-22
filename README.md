@@ -95,3 +95,7 @@ not require enabling it.
 
 No integrations currently need code. If one does, it gets its own directory, a
 job in `.github/workflows/ci.yml`, and an image published to ghcr.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
