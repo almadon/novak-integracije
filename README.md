@@ -1,101 +1,65 @@
 # novak-integracije
 
-Integrations for [Novak](https://github.com/almadon/novak) — the MCP servers and adapters that
-give the assistant its capabilities.
+**The home for tools and adapters that give [Novak](https://github.com/almadon/novak) a capability its core stack should not have to know the internals of.**
 
-The default extension catalog for Novak.
+> **Status: in testing.** The repository is set up and its CI runs, but it holds no integration at the moment. Everything Novak uses today speaks MCP itself.
+> This project comes with no warranty or guarantee of fitness for any purpose. Use it at your own risk.
+>
+> **LLM use.** Built and maintained with substantial AI assistance (Claude Code). Design and review are by a human. See the conventions in [novak's AGENTS.md](https://github.com/almadon/novak/blob/HEAD/AGENTS.md).
 
-## What belongs here
+## What this does
 
-Anything that gives the assistant a new capability, and that the core stack
-should not have to know the internals of:
+Novak reaches every capability (memory, notes, tasks, the house) through an MCP server. Most services already ship one, and for those nothing is needed here: the core registry lists them as `kind: external` and clients point straight at them. This repository exists for the other case, where an upstream has no MCP endpoint or gets identity wrong, and a small adapter has to be written and published as an image.
 
-- **First-party MCP servers** we wrote (`memory-mcp/`)
-- **Adapters** that wrap a service which doesn't speak MCP itself
-- Eventually, **third-party integrations** — this is the "store"
+## Use cases
 
-## What does NOT belong here
+- You want to connect a service that has an API but no MCP server, and you need somewhere to keep the adapter and its image build.
+- You are checking whether a new integration belongs here at all. The answer is usually no, and the bar below says why.
 
-- **The registry** (`srz/registry/mcp-servers.yaml`) — that records what *your*
-  install runs and at what risk level. It's per-deployment, not a catalog.
-- **The reconciler** — the only thing with power over containers stays in core.
-- **Anything that speaks MCP already.** If a service has its own MCP endpoint,
-  catalogue it as `kind: external` in the registry and write no code. Outline
-  is the worked example: it serves `/mcp` natively, so it needs nothing here.
-  **Wrapping is the fallback, not the default.**
+## Getting started
+
+There is nothing to build today. When an integration is added it gets its own directory, a job in `.github/workflows/ci.yml` and an image on ghcr. The core stack uses these as prebuilt images, and the registry in the Novak repo records what a deployment runs.
 
 ## The bar for adding an integration
 
-An integration is a dependency your assistant will trust with data. Before
-adding one:
+An integration is a dependency your assistant will trust with data. Before adding one:
 
-1. **Prefer no code.** Native MCP endpoint? Use it directly.
-2. **Record it** in [`novak/docs/credits.md`](https://github.com/almadon/novak/blob/HEAD/docs/credits.md) with a link
-   and licence.
-3. **Set a risk level** in the registry. `standard` reads or writes one service
-   you already run; `elevated` can act outward irreversibly; `dangerous` can
-   change the machine or the stack. Anything above standard needs a written
-   acceptance before it will start.
-4. **Pin versions.** Several existing servers run `npx -y` at container start,
-   which fetches the newest release every time and fails when the network is
-   down. Don't add more of those.
-5. **Never take a credential as a tool argument.** Secrets come from the
-   environment; the model must never see one. Identity must not be a tool
-   argument either — see below.
+1. **Prefer no code.** If the service has a native MCP endpoint, use it directly.
+2. **Record it** in [docs/credits.md](https://github.com/almadon/novak/blob/HEAD/docs/credits.md) with a link and licence.
+3. **Set a risk level** in the registry. `standard` reads or writes one service you already run. `elevated` can act outward and irreversibly. `dangerous` can change the machine or the stack. Anything above standard needs a written acceptance before it will start.
+4. **Pin versions.** Some existing servers run `npx -y` at container start, which fetches the newest release every time and fails when the network is down. Don't add more.
+5. **Never take a credential as a tool argument.** Secrets come from the environment, so the model never sees one. Identity must not be an argument either.
 
-## The identity rule
+### The identity rule
 
-If an integration is multi-user, **the caller must not be able to name the
-user.**
+If an integration serves more than one person, the caller must not be able to name the person. A model picks tool arguments from text it has read, including documents and email it did not write. If a user or namespace were a parameter, a note saying "look up user alice" would be a working attack.
 
-This isn't a style preference. A model chooses tool arguments based on text it
-has read, including documents and email it didn't write. If a user or namespace
-were a parameter, a note saying *"look up user alice"* would be a working
-attack.
-
-Hindsight is the worked example of doing it right: the memory bank is part of
-the MCP URL, each connection is scoped to one, and no tool takes a bank
-argument. There is nothing to poison.
-
-An integration that fails this test needs a wrapper here that enforces it — or,
-better, a different upstream. `memory-mcp` used to live in this repo doing
-exactly that for a backend that lacked it. It was deleted when the backend
-changed, which is the outcome to want: the shim was never the goal.
+Hindsight does this right. The memory bank is part of the MCP URL, each connection is scoped to one bank, and no tool takes a bank argument, so there is nothing to poison. An integration that fails this test needs a wrapper here that enforces it, or better, a different upstream. A first-party `memory-mcp` lived here for a backend that lacked it. It was deleted when the backend changed, which is the outcome to want: the shim was never the goal.
 
 ## Contents
 
 | Integration | What it does | Status |
 |---|---|---|
-| _(none)_ | Everything currently used speaks MCP natively | — |
+| None at the moment | Outline, Tududi and Hindsight all serve MCP themselves and are catalogued in the core registry as external entries | |
 
-That table being empty is the healthy state, not a gap. Outline, Tududi and
-Hindsight all serve MCP themselves and are catalogued in the core registry as
-external entries. Code belongs here only when an upstream leaves no choice.
+An empty table is the healthy state. Code belongs here only when an upstream leaves no choice.
 
-## Tududi: a worked example of "prefer no code"
+### A worked example of "prefer no code"
 
-Tududi was added for tasks, and needed **nothing in this repo**. It ships its
-own MCP server at `/api/mcp` (streamable HTTP, bearer token), so it is
-catalogued as an external entry in the core registry and clients point straight
-at it. No adapter, no wrapper container, no code to maintain.
+Tududi was added for tasks and needed nothing here. It ships its own MCP server at `/api/mcp` (streamable HTTP, bearer token), so it is an external entry in the core registry and clients point straight at it. Check for a native endpoint before writing anything.
 
-That is the outcome to aim for. Check for a native endpoint before writing
-anything.
+Tududi also has its own optional AI assistant, separate from its MCP server. It is off by default, and its `LLM_BASE_URL` can point at Novak's own model. Using the MCP server does not require enabling it. Vikunja stays supported as well, because removing a working integration for one you happen to prefer is not an upgrade.
 
-Vikunja stays. Tududi is an addition, not a replacement — other people use this
-too, and removing a working integration because it is not the one you happen to
-prefer is not an upgrade.
+## Documentation
 
-**Worth knowing:** Tududi also has its own optional AI assistant, separate from
-its MCP server. It is off by default and its `LLM_BASE_URL` can point at oMLX,
-so it can use Novak's own model rather than a cloud provider. Using MCP does
-not require enabling it.
+This repository is small enough that the Novak docs cover it.
 
-## Status
-
-No integrations currently need code. If one does, it gets its own directory, a
-job in `.github/workflows/ci.yml`, and an image published to ghcr.
+| Read | For |
+|---|---|
+| [novak README](https://github.com/almadon/novak#readme) | What the whole stack is |
+| [docs/architecture.md](https://github.com/almadon/novak/blob/HEAD/docs/architecture.md) | Where integrations sit |
+| [docs/identity.md](https://github.com/almadon/novak/blob/HEAD/docs/identity.md) | Why identity cannot be an argument |
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE).
